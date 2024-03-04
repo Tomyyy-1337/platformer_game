@@ -99,7 +99,7 @@ pub fn jump (
     mut query: Query<(&mut Velocity, &KinematicCharacterControllerOutput), With<Player>>,
     input: Res<Input<KeyCode>>,
 ) {
-    if input.just_pressed(KeyCode::Space) {
+    if input.pressed(KeyCode::Space) {
         for (mut velocity, charachter_controller) in query.iter_mut() {
             if charachter_controller.grounded {
                 velocity.0.y = 160.0;

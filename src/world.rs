@@ -50,7 +50,7 @@ pub struct WallBundle {
     wall: Wall,
 }
 
-#[derive(Clone, Default, Bundle, LdtkEntity)]
+#[derive(Clone, Bundle, LdtkEntity)]
 pub struct PlayerBundle {
     #[sprite_bundle("player.png")]
     pub sprite_bundle: SpriteBundle,
@@ -63,6 +63,26 @@ pub struct PlayerBundle {
     collider: ColliderBundle,
 }
 
+impl Default for PlayerBundle {
+    fn default() -> Self {
+        PlayerBundle {
+            sprite_bundle: SpriteBundle {
+                ..Default::default()
+            },
+            player: player::Player,
+            entity_instance: Default::default(),
+            velocity: Default::default(),
+            controller: KinematicCharacterController {
+                autostep: None,
+                snap_to_ground: None,
+                custom_mass: Some(100.0),
+                ..Default::default()
+            },
+            collider: Default::default(),
+        }
+    }
+}
+
 #[derive(Clone, Default, Bundle, LdtkIntCell)]
 pub struct ColliderBundle {
     pub collider: Collider,
@@ -73,7 +93,7 @@ impl From<&EntityInstance> for ColliderBundle {
 
         match entity_instance.identifier.as_ref() {
             "Player" => ColliderBundle {
-                collider: Collider::cuboid(14., 14.),
+                collider: Collider::ball(15.0),
                 ..Default::default()
             },
             _ => ColliderBundle::default(),
@@ -133,14 +153,12 @@ pub fn spawn_wall_collision(
                     ..
                 } = level.layer_instances()[0];
 
-                // combine wall tiles into flat "plates" in each individual row
                 let mut plate_stack: Vec<Vec<Plate>> = Vec::new();
 
                 for y in 0..height {
                     let mut row_plates: Vec<Plate> = Vec::new();
                     let mut plate_start = None;
 
-                    // + 1 to the width so the algorithm "terminates" plates that touch the right edge
                     for x in 0..width + 1 {
                         match (plate_start, level_walls.contains(&GridCoords { x, y })) {
                             (Some(s), false) => {
@@ -158,12 +176,10 @@ pub fn spawn_wall_collision(
                     plate_stack.push(row_plates);
                 }
 
-                // combine "plates" into rectangles across multiple rows
                 let mut rect_builder: HashMap<Plate, Rect> = HashMap::new();
                 let mut prev_row: Vec<Plate> = Vec::new();
                 let mut wall_rects: Vec<Rect> = Vec::new();
 
-                // an extra empty row so the algorithm "finishes" the rects that touch the top edge
                 plate_stack.push(Vec::new());
 
                 for (y, current_row) in plate_stack.into_iter().enumerate() {

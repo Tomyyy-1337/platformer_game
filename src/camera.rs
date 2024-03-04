@@ -8,7 +8,7 @@ impl Plugin for CameraPlugin {
         app.add_systems(Startup, (
             spawn_camera,
         ))
-        .add_systems(Update, (
+        .add_systems(PostUpdate, (
             move_camera,
         ));
     }
