@@ -29,7 +29,7 @@ fn move_camera(
 ) {
     for player_transform in player_query.iter() {
         for mut camera_transform in camera_query.iter_mut() {
-            camera_transform.translation = player_transform.translation + Vec3::new(-250.0, -200.0, 1.0);
+            camera_transform.translation = player_transform.translation + Vec3::new(-700.0, -500.0, 1.0);
         }
     }
 }

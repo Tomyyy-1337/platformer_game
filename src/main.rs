@@ -19,7 +19,7 @@ fn main() {
                 ..default()
             }),
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
-            RapierDebugRenderPlugin::default(),
+            // RapierDebugRenderPlugin::default(),
             world::WorldPlugin,
             camera::CameraPlugin,
             player::PlayerPlugin,
