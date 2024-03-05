@@ -1,6 +1,8 @@
 use bevy::prelude::*;   
 use crate::player::Player;
 
+use crate::state::ScheduleSet;
+
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
@@ -9,7 +11,7 @@ impl Plugin for CameraPlugin {
             spawn_camera,
         ))
         .add_systems(PostUpdate, (
-            move_camera,
+            move_camera.in_set(ScheduleSet::PostTransformUpdate),
         ));
     }
 }

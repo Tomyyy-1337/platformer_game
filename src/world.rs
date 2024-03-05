@@ -4,7 +4,6 @@ use bevy_rapier2d::{control::KinematicCharacterController, dynamics::RigidBody, 
 use std::collections::{HashMap, HashSet};
 use crate::player;
 use crate::state;
-
 pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
@@ -29,7 +28,7 @@ impl Plugin for WorldPlugin {
             spawn_wall_collision,
             update_level_selection,
             restart_level,
-        ));
+        ).in_set(state::ScheduleSet::MainUpdate));
     }
             
 }
@@ -108,7 +107,7 @@ pub fn spawn_wall_collision(
     level_query: Query<(Entity, &LevelIid)>,
     ldtk_projects: Query<&Handle<LdtkProject>>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
-    mut state: ResMut<NextState<state::GameState>>,
+    mut state: ResMut<NextState<state::AppState>>,
 ) {
     #[derive(Clone, Eq, PartialEq, Debug, Default, Hash)]
     struct Plate {
@@ -232,7 +231,7 @@ pub fn spawn_wall_collision(
             }
         });
     }
-    state.set(state::GameState::Playing);
+    state.set(state::AppState::Running);
 }
 
 pub fn update_level_selection(

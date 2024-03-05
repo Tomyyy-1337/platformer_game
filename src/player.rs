@@ -1,17 +1,21 @@
 use bevy::prelude::*;
 use bevy_rapier2d::control::{KinematicCharacterController, KinematicCharacterControllerOutput};
 
+use crate::state::ScheduleSet;
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, reset_velocity_on_collision)
-            .add_systems(Update, (
+        app.add_systems(Update, (
+            (
                 apply_velocity,
                 gravity,
                 move_horizontal,
                 jump,
-            ).before(reset_velocity_on_collision));
+            ).in_set(ScheduleSet::MainUpdate),
+            reset_velocity_on_collision.in_set(ScheduleSet::VelocityCorrection),
+        ));
     }
 }
 
@@ -67,7 +71,7 @@ pub fn gravity(
     mut query: Query<(&mut Velocity, &KinematicCharacterControllerOutput), With<Player>>,
     time: Res<Time>,
 ) {
-    let delta_y = -200.0 * time.delta_seconds();
+    let delta_y = -400.0 * time.delta_seconds();
     for (mut velocity, character_controller) in query.iter_mut() {
         if !character_controller.grounded {
             velocity.0.y += delta_y;
@@ -102,7 +106,7 @@ pub fn jump (
     if input.pressed(KeyCode::Space) {
         for (mut velocity, charachter_controller) in query.iter_mut() {
             if charachter_controller.grounded {
-                velocity.0.y = 160.0;
+                velocity.0.y = 200.0;
             }
         }
     } 
