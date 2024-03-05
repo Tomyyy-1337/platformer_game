@@ -1,3 +1,4 @@
+use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;   
 use crate::player::Player;
 
@@ -11,7 +12,10 @@ impl Plugin for CameraPlugin {
             spawn_camera,
         ))
         .add_systems(PostUpdate, (
-            move_camera.in_set(ScheduleSet::PostTransformUpdate),
+            (
+                move_camera,
+                zoom_on_scroll,
+            ).in_set(ScheduleSet::PostTransformUpdate),
         ));
     }
 }
@@ -25,13 +29,24 @@ fn spawn_camera(mut commands: Commands) {
     );
 }
 
+fn zoom_on_scroll(
+    mut ev_scroll: EventReader<MouseWheel>,
+    mut query: Query<&mut Transform, With<Camera>>,
+) {
+    for ev in ev_scroll.read() {
+        for mut transform in query.iter_mut() {
+            transform.scale *= Vec3::new(1.0 - ev.y / 10.0, 1.0 - ev.y / 10.0, 1.0);
+        }
+    }
+}
+
 fn move_camera(
     player_query: Query<&Transform, With<Player>>,
     mut camera_query: Query<&mut Transform, (Without<Player>, With<Camera>)>,
 ) {
     for player_transform in player_query.iter() {
         for mut camera_transform in camera_query.iter_mut() {
-            camera_transform.translation = player_transform.translation + Vec3::new(-700.0, -500.0, 1.0);
+            camera_transform.translation = player_transform.translation + Vec3::new(-700.0, -450.0, 1.0);
         }
     }
 }

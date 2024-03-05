@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
+use bevy_asset_loader::prelude::*;
 
 mod camera;
 mod world;
@@ -10,6 +11,7 @@ mod asset_loader;
 
 fn main() {
     App::new()
+        .add_state::<state::AppState>()
         .add_plugins((
             DefaultPlugins
                 .set(ImagePlugin::default_nearest())
@@ -34,6 +36,5 @@ fn main() {
         .insert_resource(RapierConfiguration {
             ..Default::default()
         })
-        .add_state::<state::AppState>()
         .run();
 }

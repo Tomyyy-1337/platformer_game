@@ -6,6 +6,7 @@ pub enum ScheduleSet {
     PauseMenu,
     MainUpdate,
     VelocityCorrection,
+    TransformUpdate,
     PostTransformUpdate,
 }
 
@@ -26,6 +27,7 @@ impl Plugin for SchedulePlugin {
                 (
                     ScheduleSet::MainUpdate,
                     ScheduleSet::VelocityCorrection,
+                    ScheduleSet::TransformUpdate,
                     ScheduleSet::PostTransformUpdate,
                 ).chain().run_if(in_state(AppState::Running)),
                 ScheduleSet::PauseMenu.run_if(in_state(AppState::Menu))

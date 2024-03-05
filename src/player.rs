@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier2d::control::{KinematicCharacterController, KinematicCharacterControllerOutput};
+use bevy_asset_loader::prelude::*;
 
 use crate::state::ScheduleSet;
 
@@ -9,12 +10,16 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, (
             (
-                apply_velocity,
                 gravity,
                 move_horizontal,
                 jump,
             ).in_set(ScheduleSet::MainUpdate),
-            reset_velocity_on_collision.in_set(ScheduleSet::VelocityCorrection),
+            (
+                reset_velocity_on_collision,
+            ).in_set(ScheduleSet::VelocityCorrection),
+            (
+                apply_velocity,
+            ).in_set(ScheduleSet::TransformUpdate),
         ));
     }
 }
