@@ -12,7 +12,7 @@ impl Plugin for AssetLoaderPlugin {
         app.init_resource::<FontAssets>()
             .add_systems(PreStartup, (
                 load_font_assets,
-            ));
+        ));
     }
 }
 
@@ -24,3 +24,4 @@ fn load_font_assets(
         menu_font: asset_server.load("fonts/LonelyNight.otf")
     };
 }
+

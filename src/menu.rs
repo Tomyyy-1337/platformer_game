@@ -8,6 +8,9 @@ use crate::state::AppState;
 pub struct FortsetzenButton;
 
 #[derive(Component)]
+pub struct FullscreenButton;
+
+#[derive(Component)]
 pub struct QuitButton;
 
 #[derive(Component)]
@@ -30,6 +33,7 @@ impl Plugin for MenuPlugin {
                 clear_menu,
                 toggle_cursor_visibiltiy,
                 toggle_framerate,
+                toggle_fullscreen_system,
             ).in_set(ScheduleSet::CheckMenu))
             .add_systems(Update, (
                 fortsetzen_button,
@@ -48,8 +52,11 @@ fn toggle_cursor_visibiltiy(
     match simulation_state.get() {
         AppState::Menu if simulation_state.is_changed() => {
             let mut primary_window = q_windows.single_mut();
+            let width = primary_window.width();
+            let height = primary_window.height();
             primary_window.cursor.grab_mode = CursorGrabMode::None;
             primary_window.cursor.visible = true;
+            primary_window.set_cursor_position(Some(Vec2::new(width / 2.0, height / 2.0 )));
         },
         AppState::Running if simulation_state.is_changed() => {
             let mut primary_window = q_windows.single_mut();
@@ -176,7 +183,34 @@ fn toggle_menu(
                                     )));
                                 });
 
-                                // Toggle Hitboxes Button
+                                // Toggle Fullscreen Button
+                                parent.spawn((
+                                    FullscreenButton,
+                                    ButtonBundle {
+                                        style: Style {
+                                            margin: UiRect::all(Val::Px(15.0)),
+                                            ..default()
+                                        },
+                                        background_color: Color::rgba(0.0, 0.0, 0.0, 0.8).into(),
+                                        ..Default::default()
+                                }))
+                                .with_children(|parent| {
+                                    parent.spawn((MenuItem, TextBundle::from_section(
+                                        "Toggle Fullscreen",
+                                        TextStyle {
+                                            font: font_assets.menu_font.clone(),
+                                            font_size: 25.0,
+                                            color: Color::WHITE,
+                                        },
+                                    ).with_style(
+                                        Style {
+                                            margin: UiRect::all(Val::Px(15.0)),
+                                            ..default()
+                                        }
+                                    )));
+                                });
+
+                                // Toggle V-Sync
                                 parent.spawn((
                                     FramerateButton,
                                     ButtonBundle {
@@ -301,5 +335,36 @@ pub fn toggle_framerate(
             },
             _ => {},
         }
+    }
+}
+
+fn toggle_fullscreen_system(
+    keyboard_inputs: ResMut<Input<KeyCode>>,
+    window_query: Query<&mut Window, With<PrimaryWindow>>,
+    mut interaction_query: Query<&Interaction,(Changed<Interaction>, With<FullscreenButton>)>,
+) {
+    if keyboard_inputs.just_pressed(KeyCode::F11) {
+        toggle_fullscreen(window_query);
+        return;
+    }
+    for interaction in interaction_query.iter_mut() {
+        match interaction {
+            Interaction::Pressed => {
+                toggle_fullscreen(window_query);
+                return;
+            },
+            _ => {},
+        }
+    }
+}
+
+fn toggle_fullscreen(mut window_query: Query<'_, '_, &mut Window, With<PrimaryWindow>>) {
+    for mut w in window_query.iter_mut() {
+        w.mode = match w.mode {
+            bevy::window::WindowMode::Windowed => bevy::window::WindowMode::BorderlessFullscreen,
+            _ => bevy::window::WindowMode::Windowed,
+        };
+        
+    
     }
 }
