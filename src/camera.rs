@@ -1,4 +1,5 @@
-use bevy::prelude::*;   
+use bevy::prelude::*;
+use bevy::render::camera;   
 use crate::player::Player;
 
 use crate::state::ScheduleSet;
@@ -52,7 +53,8 @@ fn move_camera(
 ) {
     for player_transform in player_query.iter() {
         for mut camera_transform in camera_query.iter_mut() {
-            camera_transform.translation = player_transform.translation + Vec3::new(-700.0, -450.0, 1.0);
+            let camera_pos = camera_transform.translation;
+            camera_transform.translation += (player_transform.translation + Vec3::new(-700.0, -480.0, 1.0) - camera_pos) * 0.1;
         }
     }
 }
