@@ -1,7 +1,4 @@
-use std::time;
-
 use bevy::prelude::*;
-use bevy::render::camera;   
 use crate::player::Player;
 
 use crate::state::ScheduleSet;
@@ -17,7 +14,7 @@ impl Plugin for CameraPlugin {
         .add_systems(Update, (
             (
                 move_camera,
-                zoom_on_scroll,
+                zoom_on_event,
             ).in_set(ScheduleSet::PostTransformUpdate),
         ));
     }
@@ -26,13 +23,13 @@ impl Plugin for CameraPlugin {
 fn spawn_camera(mut commands: Commands) {
     commands.spawn(
         Camera2dBundle {
-            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 1.0)).with_scale(Vec3 { x: 0.4, y: 0.4, z: 1.0 }),
+            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 10.0)).with_scale(Vec3 { x: 0.4, y: 0.4, z: 1.0 }),
             ..Default::default()
         }
     );
 }
 
-fn zoom_on_scroll(
+fn zoom_on_event(
     mut ev_scroll: EventReader<GameInputEvent>,
     mut query: Query<&mut Transform, With<Camera>>,
 ) {
@@ -57,7 +54,7 @@ fn move_camera(
     for player_transform in player_query.iter() {
         for mut camera_transform in camera_query.iter_mut() {
             let camera_pos = camera_transform.translation;
-            camera_transform.translation += (player_transform.translation + Vec3::new(-700.0, -480.0, 1.0) - camera_pos) * time.delta_seconds() * 10.0;
+            camera_transform.translation += (player_transform.translation + Vec3::new(-700.0, -480.0, 0.0) - camera_pos) * time.delta_seconds() * 10.0;
         }
     }
 }

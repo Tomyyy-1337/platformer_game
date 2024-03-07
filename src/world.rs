@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
-use bevy_rapier2d::{control::KinematicCharacterController, dynamics::RigidBody, geometry::{Collider, Friction}};
+use bevy_rapier2d::{control::{CharacterAutostep, CharacterLength, KinematicCharacterController}, dynamics::RigidBody, geometry::{Collider, Friction}};
 use std::collections::{HashMap, HashSet};
 use crate::player;
 use crate::state;
@@ -52,8 +52,7 @@ pub struct WallBundle {
 
 #[derive(Clone, Bundle, LdtkEntity)]
 pub struct PlayerBundle {
-    #[sprite_bundle("player.png")]
-    pub sprite_bundle: SpriteBundle,
+    pub transform: TransformBundle,
     pub player: player::Player,
     #[from_entity_instance]
     entity_instance: EntityInstance,
@@ -66,14 +65,16 @@ pub struct PlayerBundle {
 impl Default for PlayerBundle {
     fn default() -> Self {
         PlayerBundle {
-            sprite_bundle: SpriteBundle {
-                ..Default::default()
-            },
+            transform: TransformBundle::default(),
             player: player::Player,
             entity_instance: Default::default(),
             velocity: Default::default(),
             controller: KinematicCharacterController {
-                autostep: None,
+                autostep: Some(CharacterAutostep{
+                    max_height: CharacterLength::Absolute(0.01),
+                    min_width: CharacterLength::Absolute(0.0),
+                    include_dynamic_bodies: false,
+                }),
                 snap_to_ground: None,
                 custom_mass: Some(100.0),
                 ..Default::default()
@@ -90,10 +91,9 @@ pub struct ColliderBundle {
 
 impl From<&EntityInstance> for ColliderBundle {
     fn from(entity_instance: &EntityInstance) -> ColliderBundle {
-
         match entity_instance.identifier.as_ref() {
             "Player" => ColliderBundle {
-                collider: Collider::cuboid(14.0, 14.0),
+                collider: Collider::cuboid(7.0, 18.0),
                 ..Default::default()
             },
             _ => ColliderBundle::default(),
