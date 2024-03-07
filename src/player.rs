@@ -97,12 +97,18 @@ pub fn move_horizontal(
         match event {
             InputEvent::MoveLeft(input_strength) => {
                 for mut velocity in query.iter_mut() {
+                    if velocity.0.x > 0.0 {
+                        velocity.0.x = 0.0;
+                    }
                     velocity.0.x = (-max_speed as f32 * input_strength).max(velocity.0.x - acceleration * time.delta_seconds());
                     active_movement = true;
                 }
             }
             InputEvent::MoveRight(input_strength) => {
                 for mut velocity in query.iter_mut() {
+                    if velocity.0.x < 0.0 {
+                        velocity.0.x = 0.0;
+                    }
                     velocity.0.x = (max_speed * input_strength).min(velocity.0.x + acceleration * time.delta_seconds());
                     active_movement = true;
                 }
@@ -112,11 +118,7 @@ pub fn move_horizontal(
     }
     if !active_movement {
         for mut velocity in query.iter_mut() {
-            if velocity.0.x > 0.0 {
-                velocity.0.x = (velocity.0.x - 5.0 * acceleration * time.delta_seconds()).max(0.0);
-            } else if velocity.0.x < 0.0 {
-                velocity.0.x = (velocity.0.x + 5.0 * acceleration * time.delta_seconds()).min(0.0);
-            }
+            velocity.0.x = 0.0;
         }
     }
 }
