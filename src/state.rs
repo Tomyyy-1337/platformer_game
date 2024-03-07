@@ -4,6 +4,7 @@ use bevy::prelude::*;
 pub enum ScheduleSet {
     CheckMenu,
     PauseMenu,
+    HandleInput,
     MainUpdate,
     VelocityCorrection,
     TransformUpdate,
@@ -23,6 +24,7 @@ impl Plugin for SchedulePlugin {
     fn build(&self, app: &mut App) {
         app.add_state::<AppState>()
             .configure_sets(Update, (
+                ScheduleSet::HandleInput,
                 ScheduleSet::CheckMenu,
                 (
                     ScheduleSet::MainUpdate,
@@ -30,7 +32,9 @@ impl Plugin for SchedulePlugin {
                     ScheduleSet::TransformUpdate,
                     ScheduleSet::PostTransformUpdate,
                 ).chain().run_if(in_state(AppState::Running)),
-                ScheduleSet::PauseMenu.run_if(in_state(AppState::Menu))
+                (
+                    ScheduleSet::PauseMenu,
+                ).run_if(in_state(AppState::Menu))
             ).chain());
     }
 }

@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier2d::control::{KinematicCharacterController, KinematicCharacterControllerOutput};
-use bevy_asset_loader::prelude::*;
 
 use crate::state::ScheduleSet;
+use crate::input::InputEvent;
 
 pub struct PlayerPlugin;
 
@@ -86,33 +86,55 @@ pub fn gravity(
 
 pub fn move_horizontal(
     mut query: Query<&mut Velocity, With<Player>>,
-    input: Res<Input<KeyCode>>,
     time: Res<Time>,
+    mut input_events: EventReader<InputEvent>
 ) { 
-    let acceleration = 300.0;
-    let max_speed: f32 = 120.0;
-    for mut velocity in query.iter_mut() {
-        if input.pressed(KeyCode::A) {
-            velocity.0.x = (-max_speed as f32).max(velocity.0.x - acceleration * time.delta_seconds());
-        } else if input.pressed(KeyCode::D) {
-            velocity.0.x = max_speed.min(velocity.0.x + acceleration * time.delta_seconds());
-        } else if velocity.0.x > 0.0 {
-            velocity.0.x = (velocity.0.x - acceleration * time.delta_seconds()).max(0.0);
-        } else if velocity.0.x < 0.0 {
-            velocity.0.x = (velocity.0.x + acceleration * time.delta_seconds()).min(0.0);
+    let acceleration = 500.0;
+    let max_speed: f32 = 170.0;
+
+    let mut active_movement = false;
+    for event in input_events.read() {
+        match event {
+            InputEvent::MoveLeft(input_strength) => {
+                for mut velocity in query.iter_mut() {
+                    velocity.0.x = (-max_speed as f32 * input_strength).max(velocity.0.x - acceleration * time.delta_seconds());
+                    active_movement = true;
+                }
+            }
+            InputEvent::MoveRight(input_strength) => {
+                for mut velocity in query.iter_mut() {
+                    velocity.0.x = (max_speed * input_strength).min(velocity.0.x + acceleration * time.delta_seconds());
+                    active_movement = true;
+                }
+            }
+            _ => {}
+        } 
+    }
+    if !active_movement {
+        for mut velocity in query.iter_mut() {
+            if velocity.0.x > 0.0 {
+                velocity.0.x = (velocity.0.x - 5.0 * acceleration * time.delta_seconds()).max(0.0);
+            } else if velocity.0.x < 0.0 {
+                velocity.0.x = (velocity.0.x + 5.0 * acceleration * time.delta_seconds()).min(0.0);
+            }
         }
     }
 }
 
 pub fn jump (
     mut query: Query<(&mut Velocity, &KinematicCharacterControllerOutput), With<Player>>,
-    input: Res<Input<KeyCode>>,
+    mut input_events: EventReader<InputEvent>
 ) {
-    if input.pressed(KeyCode::Space) {
-        for (mut velocity, charachter_controller) in query.iter_mut() {
-            if charachter_controller.grounded {
-                velocity.0.y = 200.0;
+    for event in input_events.read() {
+        match event {
+            InputEvent::Jump => {
+                for (mut velocity, charachter_controller) in query.iter_mut() {
+                    if charachter_controller.grounded {
+                        velocity.0.y = 200.0;
+                    }
+                }
             }
+            _ => {}
         }
-    } 
+    }
 }

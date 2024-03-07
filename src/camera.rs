@@ -1,8 +1,8 @@
-use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;   
 use crate::player::Player;
 
 use crate::state::ScheduleSet;
+use crate::input::InputEvent;
 
 pub struct CameraPlugin;
 
@@ -11,7 +11,7 @@ impl Plugin for CameraPlugin {
         app.add_systems(Startup, (
             spawn_camera,
         ))
-        .add_systems(PostUpdate, (
+        .add_systems(Update, (
             (
                 move_camera,
                 zoom_on_scroll,
@@ -30,12 +30,18 @@ fn spawn_camera(mut commands: Commands) {
 }
 
 fn zoom_on_scroll(
-    mut ev_scroll: EventReader<MouseWheel>,
+    mut ev_scroll: EventReader<InputEvent>,
     mut query: Query<&mut Transform, With<Camera>>,
 ) {
     for ev in ev_scroll.read() {
-        for mut transform in query.iter_mut() {
-            transform.scale *= Vec3::new(1.0 - ev.y / 10.0, 1.0 - ev.y / 10.0, 1.0);
+        match ev {
+            InputEvent::Zoom(y) => {
+                for mut transform in query.iter_mut() {
+                    transform.scale *= Vec3::new(1.0 + y * -0.1, 1.0 + y * -0.1, 1.0);
+                }
+            }
+            _ => {}
+            
         }
     }
 }

@@ -4,6 +4,7 @@ use bevy_rapier2d::{control::KinematicCharacterController, dynamics::RigidBody, 
 use std::collections::{HashMap, HashSet};
 use crate::player;
 use crate::state;
+use crate::input;
 pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
@@ -274,11 +275,17 @@ pub fn update_level_selection(
 pub fn restart_level(
     mut commands: Commands,
     level_query: Query<Entity, With<LevelIid>>,
-    input: Res<Input<KeyCode>>,
+    mut input: EventReader<input::InputEvent>
 ) {
-    if input.just_pressed(KeyCode::R) {
-        for level_entity in &level_query {
-            commands.entity(level_entity).insert(Respawn);
+    for event in input.read() {
+        match event {
+            input::InputEvent::ResetLevel => {
+                for level_entity in &level_query {
+                    commands.entity(level_entity).insert(Respawn);
+                }
+            }
+            _ => {}
         }
     }
+
 }

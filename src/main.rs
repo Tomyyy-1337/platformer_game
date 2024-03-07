@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
-use bevy_asset_loader::prelude::*;
 
 mod camera;
 mod world;
@@ -8,6 +7,7 @@ mod player;
 mod state;
 mod menu;
 mod asset_loader;
+mod input;
 
 fn main() {
     App::new()
@@ -32,6 +32,7 @@ fn main() {
             player::PlayerPlugin,
             state::SchedulePlugin,
             menu::MenuPlugin,
+            input::InputPlugin,
         ))
         .insert_resource(RapierConfiguration {
             ..Default::default()
