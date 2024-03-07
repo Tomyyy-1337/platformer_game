@@ -24,7 +24,9 @@ impl Plugin for SchedulePlugin {
     fn build(&self, app: &mut App) {
         app.add_state::<AppState>()
             .configure_sets(Update, (
-                ScheduleSet::HandleInput,
+                (
+                    ScheduleSet::HandleInput,
+                ).run_if(in_state(AppState::Running)),
                 ScheduleSet::CheckMenu,
                 (
                     ScheduleSet::MainUpdate,

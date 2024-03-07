@@ -275,11 +275,11 @@ pub fn update_level_selection(
 pub fn restart_level(
     mut commands: Commands,
     level_query: Query<Entity, With<LevelIid>>,
-    mut input: EventReader<input::InputEvent>
+    mut input: EventReader<input::GameInputEvent>
 ) {
     for event in input.read() {
         match event {
-            input::InputEvent::ResetLevel => {
+            input::GameInputEvent::ResetLevel => {
                 for level_entity in &level_query {
                     commands.entity(level_entity).insert(Respawn);
                 }

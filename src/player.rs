@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::control::{KinematicCharacterController, KinematicCharacterControllerOutput};
 
 use crate::state::ScheduleSet;
-use crate::input::InputEvent;
+use crate::input::GameInputEvent;
 
 pub struct PlayerPlugin;
 
@@ -87,7 +87,7 @@ pub fn gravity(
 pub fn move_horizontal(
     mut query: Query<&mut Velocity, With<Player>>,
     time: Res<Time>,
-    mut input_events: EventReader<InputEvent>
+    mut input_events: EventReader<GameInputEvent>
 ) { 
     let acceleration = 500.0;
     let max_speed: f32 = 170.0;
@@ -95,7 +95,7 @@ pub fn move_horizontal(
     let mut active_movement = false;
     for event in input_events.read() {
         match event {
-            InputEvent::MoveLeft(input_strength) => {
+            GameInputEvent::MoveLeft(input_strength) => {
                 for mut velocity in query.iter_mut() {
                     if velocity.0.x > 0.0 {
                         velocity.0.x = 0.0;
@@ -104,7 +104,7 @@ pub fn move_horizontal(
                     active_movement = true;
                 }
             }
-            InputEvent::MoveRight(input_strength) => {
+            GameInputEvent::MoveRight(input_strength) => {
                 for mut velocity in query.iter_mut() {
                     if velocity.0.x < 0.0 {
                         velocity.0.x = 0.0;
@@ -125,11 +125,11 @@ pub fn move_horizontal(
 
 pub fn jump (
     mut query: Query<(&mut Velocity, &KinematicCharacterControllerOutput), With<Player>>,
-    mut input_events: EventReader<InputEvent>
+    mut input_events: EventReader<GameInputEvent>
 ) {
     for event in input_events.read() {
         match event {
-            InputEvent::Jump => {
+            GameInputEvent::Jump => {
                 for (mut velocity, charachter_controller) in query.iter_mut() {
                     if charachter_controller.grounded {
                         velocity.0.y = 200.0;

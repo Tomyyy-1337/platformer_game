@@ -1,7 +1,8 @@
+use bevy::ecs::event;
 use bevy::{prelude::*, window::PresentMode};
 use bevy::window::{CursorGrabMode, PrimaryWindow};
 use crate::asset_loader::FontAssets;
-use crate::input::{InputEvent, MenuInputEvent};
+use crate::input::{GameInputEvent, MenuInputEvent};
 use crate::state::ScheduleSet;
 use crate::state::AppState;
 
@@ -103,7 +104,7 @@ fn handle_menu_event(
                     
                 }
             }
-               
+            MenuInputEvent::CloseMenu => fortsetzten_action(&mut commands),
         }
     }
 }
@@ -150,13 +151,23 @@ fn clear_menu(
 /// System to toggle the menu state when the Escape key is pressed.
 fn toggle_menu(
     mut commands: Commands,
-    mut keyboard_inputs: EventReader<InputEvent>,
+    mut ingame_events: EventReader<GameInputEvent>,
+    mut menu_events: EventReader<MenuInputEvent>,
     simulation_state: Res<State<AppState>>,
     font_assets: Res<FontAssets>,    
 ) {
-    for event in keyboard_inputs.read() {
+    for event in menu_events.read() {
         match event {
-            InputEvent::Menu => {
+            MenuInputEvent::CloseMenu => {
+                commands.insert_resource(NextState(Some(AppState::Running)));
+            },
+            _ => (),
+        }
+    }
+
+    for event in ingame_events.read() {
+        match event {
+            GameInputEvent::OpenMenu => {
                 match simulation_state.get() {
                     AppState::Running => {
                         commands.insert_resource(NextState(Some(AppState::Menu)));
@@ -338,9 +349,7 @@ fn toggle_menu(
                                 });
                         });
                     },
-                    AppState::Menu => {
-                        commands.insert_resource(NextState(Some(AppState::Running)));
-                    },
+                    _ => (),
                 };
             },
             _ => ()
@@ -437,12 +446,12 @@ fn toggle_framerate_action(window_query: &mut Query<'_, '_, &mut Window, With<Pr
 }
 
 fn toggle_fullscreen_key(
-    mut keyboard_inputs: EventReader<InputEvent>,
+    mut keyboard_inputs: EventReader<GameInputEvent>,
     window_query: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     for event in keyboard_inputs.read() {
         match event {
-            InputEvent::ToggleFullscreen => {
+            GameInputEvent::ToggleFullscreen => {
                 toggle_fullscreen(window_query);
                 return;
             },

@@ -5,7 +5,7 @@ use bevy::render::camera;
 use crate::player::Player;
 
 use crate::state::ScheduleSet;
-use crate::input::InputEvent;
+use crate::input::GameInputEvent;
 
 pub struct CameraPlugin;
 
@@ -33,12 +33,12 @@ fn spawn_camera(mut commands: Commands) {
 }
 
 fn zoom_on_scroll(
-    mut ev_scroll: EventReader<InputEvent>,
+    mut ev_scroll: EventReader<GameInputEvent>,
     mut query: Query<&mut Transform, With<Camera>>,
 ) {
     for ev in ev_scroll.read() {
         match ev {
-            InputEvent::Zoom(y) => {
+            GameInputEvent::Zoom(y) => {
                 for mut transform in query.iter_mut() {
                     transform.scale *= Vec3::new(1.0 + y * -0.1, 1.0 + y * -0.1, 1.0);
                 }
