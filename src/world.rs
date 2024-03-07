@@ -1,37 +1,36 @@
-use bevy::prelude::*;
-use bevy_ecs_ldtk::prelude::*;
-use bevy_rapier2d::{control::{CharacterAutostep, CharacterLength, KinematicCharacterController}, dynamics::RigidBody, geometry::{Collider, Friction}};
-use std::collections::{HashMap, HashSet};
+use crate::input;
 use crate::player;
 use crate::state;
-use crate::input;
+use bevy::prelude::*;
+use bevy_ecs_ldtk::prelude::*;
+use bevy_rapier2d::{
+    control::{CharacterAutostep, CharacterLength, KinematicCharacterController},
+    dynamics::RigidBody,
+    geometry::{Collider, Friction},
+};
+use std::collections::{HashMap, HashSet};
 pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((
-            LdtkPlugin,
-        ))
-        .insert_resource(LevelSelection::Uid(0))
-        .insert_resource(LdtkSettings {
-            level_spawn_behavior: LevelSpawnBehavior::UseWorldTranslation {
-                load_level_neighbors: true,
-            },
-            set_clear_color: SetClearColor::FromLevelBackground,
-            ..Default::default()
-        })
-        .register_ldtk_int_cell::<WallBundle>(1)
-        .register_ldtk_entity::<PlayerBundle>("Player")
-        .add_systems(Startup, (
-            setup,
-        ))
-        .add_systems(Update, (
-            spawn_wall_collision,
-            update_level_selection,
-            restart_level,
-        ).in_set(state::ScheduleSet::MainUpdate));
+        app.add_plugins((LdtkPlugin,))
+            .insert_resource(LevelSelection::Uid(0))
+            .insert_resource(LdtkSettings {
+                level_spawn_behavior: LevelSpawnBehavior::UseWorldTranslation {
+                    load_level_neighbors: true,
+                },
+                set_clear_color: SetClearColor::FromLevelBackground,
+                ..Default::default()
+            })
+            .register_ldtk_int_cell::<WallBundle>(1)
+            .register_ldtk_entity::<PlayerBundle>("Player")
+            .add_systems(Startup, (setup,))
+            .add_systems(
+                Update,
+                (spawn_wall_collision, update_level_selection, restart_level)
+                    .in_set(state::ScheduleSet::MainUpdate),
+            );
     }
-            
 }
 
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -70,7 +69,7 @@ impl Default for PlayerBundle {
             entity_instance: Default::default(),
             velocity: Default::default(),
             controller: KinematicCharacterController {
-                autostep: Some(CharacterAutostep{
+                autostep: Some(CharacterAutostep {
                     max_height: CharacterLength::Absolute(0.01),
                     min_width: CharacterLength::Absolute(0.0),
                     include_dynamic_bodies: false,
@@ -275,7 +274,7 @@ pub fn update_level_selection(
 pub fn restart_level(
     mut commands: Commands,
     level_query: Query<Entity, With<LevelIid>>,
-    mut input: EventReader<input::GameInputEvent>
+    mut input: EventReader<input::GameInputEvent>,
 ) {
     for event in input.read() {
         match event {
@@ -287,5 +286,4 @@ pub fn restart_level(
             _ => {}
         }
     }
-
 }

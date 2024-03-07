@@ -1,14 +1,14 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-mod camera;
-mod world;
-mod player;
-mod state;
-mod menu;
 mod asset_loader;
+mod camera;
 mod input;
+mod menu;
+mod player;
 mod player_assets;
+mod state;
+mod world;
 
 fn main() {
     App::new()
@@ -21,10 +21,9 @@ fn main() {
                         title: "Platformer".into(),
                         resolution: (1200., 750.).into(),
                         ..default()
-                        }),
+                    }),
                     ..default()
-                }
-            ),
+                }),
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
             RapierDebugRenderPlugin::default(),
             asset_loader::AssetLoaderPlugin,

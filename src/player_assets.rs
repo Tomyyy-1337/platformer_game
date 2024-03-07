@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 
-use crate::state::ScheduleSet;
 use crate::player;
+use crate::state::ScheduleSet;
 
 #[derive(Component)]
 pub struct PlayerSprite;
@@ -22,39 +22,34 @@ impl Plugin for AssetLoadingPlugin {
             .add_loading_state(
                 LoadingState::new(LoadState::AssetLoading)
                     .continue_to_state(LoadState::Done)
-                    .load_collection::<PlayerAssets>()
+                    .load_collection::<PlayerAssets>(),
             )
-            .add_systems(
-                OnEnter(LoadState::Done),
-                (
-                    spawn_player_sprite,
-                ),
-            )
+            .add_systems(OnEnter(LoadState::Done), (spawn_player_sprite,))
             .add_systems(
                 Update,
-                (
-                    animate_sprite_system,
-                    update_player_sprite_pos,
-                ).run_if(in_state(LoadState::Done)).in_set(ScheduleSet::PostTransformUpdate),
+                (animate_sprite_system, update_player_sprite_pos)
+                    .run_if(in_state(LoadState::Done))
+                    .in_set(ScheduleSet::PostTransformUpdate),
             );
     }
 }
 
 fn update_player_sprite_pos(
     player_query: Query<(&Transform, With<player::Player>)>,
-    mut player_sprite_query: Query<(&mut Transform, (With<PlayerSprite>, Without<player::Player>))>,
+    mut player_sprite_query: Query<(
+        &mut Transform,
+        (With<PlayerSprite>, Without<player::Player>),
+    )>,
 ) {
     for player_transform in &mut player_query.iter() {
         for mut sprite_transform in &mut player_sprite_query.iter_mut() {
-            sprite_transform.0.translation = player_transform.0.translation + Vec3::new(-700.0, -515.0, 5.0);
+            sprite_transform.0.translation =
+                player_transform.0.translation + Vec3::new(-700.0, -515.0, 5.0);
         }
     }
 }
 
-fn spawn_player_sprite (
-    mut commands: Commands,
-    my_assets: Res<PlayerAssets>,
-) {
+fn spawn_player_sprite(mut commands: Commands, my_assets: Res<PlayerAssets>) {
     println!("Spawning player sprite");
     commands.spawn((
         PlayerSprite,
@@ -68,14 +63,12 @@ fn spawn_player_sprite (
                 index: 0,
                 // flip_x: true,
                 ..Default::default()
-            
             },
             texture_atlas: my_assets.player_walk.clone(),
             ..Default::default()
         },
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
     ));
-    
 }
 
 #[derive(Component)]

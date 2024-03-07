@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use bevy::input::mouse::MouseWheel;
+use bevy::prelude::*;
 
 use crate::state::ScheduleSet;
 
@@ -28,49 +28,57 @@ impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<GameInputEvent>()
             .add_event::<MenuInputEvent>()
-            .add_systems(Update, (
-                handle_keyboard_input,
-                handle_mouse_wheel_input,
-                gamepad_system,
-            ).in_set(ScheduleSet::HandleInput)
-        )
-        .add_systems(Update, (
-            handle_menu_event_keyboard,
-            handle_menu_event_controler,
-        ).in_set(ScheduleSet::PauseMenu));
+            .add_systems(
+                Update,
+                (
+                    handle_keyboard_input,
+                    handle_mouse_wheel_input,
+                    gamepad_system,
+                )
+                    .in_set(ScheduleSet::HandleInput),
+            )
+            .add_systems(
+                Update,
+                (handle_menu_event_keyboard, handle_menu_event_controler)
+                    .in_set(ScheduleSet::PauseMenu),
+            );
     }
 }
 
-fn handle_menu_event_keyboard (
+fn handle_menu_event_keyboard(
     mut menu_input_event: EventWriter<MenuInputEvent>,
     keyboard_input: Res<Input<KeyCode>>,
 ) {
-    keyboard_input.get_just_pressed().filter_map(|key| match key {
-        KeyCode::Up => Some(MenuInputEvent::Up),
-        KeyCode::Down => Some(MenuInputEvent::Down),
-        KeyCode::Return => Some(MenuInputEvent::Select),
-        KeyCode::Escape => Some(MenuInputEvent::CloseMenu),
-        _ => None,
-    }).for_each(|event| menu_input_event.send(event));
+    keyboard_input
+        .get_just_pressed()
+        .filter_map(|key| match key {
+            KeyCode::Up => Some(MenuInputEvent::Up),
+            KeyCode::Down => Some(MenuInputEvent::Down),
+            KeyCode::Return => Some(MenuInputEvent::Select),
+            KeyCode::Escape => Some(MenuInputEvent::CloseMenu),
+            _ => None,
+        })
+        .for_each(|event| menu_input_event.send(event));
 }
 
 fn handle_menu_event_controler(
     button_inputs: Res<Input<GamepadButton>>,
     mut input_event: EventWriter<MenuInputEvent>,
 ) {
-    button_inputs.get_just_pressed().for_each(|button| {
-        match button {
-            GamepadButton { gamepad: _, button_type } => {
-                match button_type {
-                    GamepadButtonType::DPadUp => input_event.send(MenuInputEvent::Up),
-                    GamepadButtonType::DPadDown => input_event.send(MenuInputEvent::Down),
-                    GamepadButtonType::South => input_event.send(MenuInputEvent::Select),
-                    GamepadButtonType::Start => input_event.send(MenuInputEvent::CloseMenu),
-                    _ => {}
-                }
-            }
-    }});
-    
+    button_inputs
+        .get_just_pressed()
+        .for_each(|button| match button {
+            GamepadButton {
+                gamepad: _,
+                button_type,
+            } => match button_type {
+                GamepadButtonType::DPadUp => input_event.send(MenuInputEvent::Up),
+                GamepadButtonType::DPadDown => input_event.send(MenuInputEvent::Down),
+                GamepadButtonType::South => input_event.send(MenuInputEvent::Select),
+                GamepadButtonType::Start => input_event.send(MenuInputEvent::CloseMenu),
+                _ => {}
+            },
+        });
 }
 
 fn handle_mouse_wheel_input(
@@ -86,18 +94,24 @@ fn handle_keyboard_input(
     mut input_event: EventWriter<GameInputEvent>,
     keyboard_input: Res<Input<KeyCode>>,
 ) {
-    keyboard_input.get_pressed().filter_map(|key| match key {
-        KeyCode::A => Some(GameInputEvent::MoveLeft(1.0)),
-        KeyCode::D => Some(GameInputEvent::MoveRight(1.0)),
-        KeyCode::Space => Some(GameInputEvent::Jump),
-        _ => None,
-    }).for_each(|event| input_event.send(event));
-    keyboard_input.get_just_pressed().filter_map(|key| match key {
-        KeyCode::R => Some(GameInputEvent::ResetLevel),
-        KeyCode::Escape => Some(GameInputEvent::OpenMenu),
-        KeyCode::F11 => Some(GameInputEvent::ToggleFullscreen),
-        _ => None,
-    }).for_each(|event| input_event.send(event));
+    keyboard_input
+        .get_pressed()
+        .filter_map(|key| match key {
+            KeyCode::A => Some(GameInputEvent::MoveLeft(1.0)),
+            KeyCode::D => Some(GameInputEvent::MoveRight(1.0)),
+            KeyCode::Space => Some(GameInputEvent::Jump),
+            _ => None,
+        })
+        .for_each(|event| input_event.send(event));
+    keyboard_input
+        .get_just_pressed()
+        .filter_map(|key| match key {
+            KeyCode::R => Some(GameInputEvent::ResetLevel),
+            KeyCode::Escape => Some(GameInputEvent::OpenMenu),
+            KeyCode::F11 => Some(GameInputEvent::ToggleFullscreen),
+            _ => None,
+        })
+        .for_each(|event| input_event.send(event));
 }
 
 fn gamepad_system(
@@ -108,28 +122,34 @@ fn gamepad_system(
     time: Res<Time>,
 ) {
     for gamepad in gamepads.iter() {
-        button_inputs.get_pressed().for_each(|button| {
-            match button {
-                GamepadButton { gamepad: _, button_type } => {
-                    match button_type {
-                        GamepadButtonType::South => input_event.send(GameInputEvent::Jump),
-                        GamepadButtonType::DPadUp => input_event.send(GameInputEvent::Zoom(10.0 * time.delta_seconds())),
-                        GamepadButtonType::DPadDown => input_event.send(GameInputEvent::Zoom(-10.0 * time.delta_seconds())),
-                        _ => {}
-                    }
+        button_inputs.get_pressed().for_each(|button| match button {
+            GamepadButton {
+                gamepad: _,
+                button_type,
+            } => match button_type {
+                GamepadButtonType::South => input_event.send(GameInputEvent::Jump),
+                GamepadButtonType::DPadUp => {
+                    input_event.send(GameInputEvent::Zoom(10.0 * time.delta_seconds()))
                 }
-        }});
-        button_inputs.get_just_pressed().for_each(|button| {
-            match button {
-                GamepadButton { gamepad: _, button_type } => {
-                    match button_type {
-                        GamepadButtonType::East => input_event.send(GameInputEvent::ResetLevel),
-                        GamepadButtonType::Start => input_event.send(GameInputEvent::OpenMenu),
-                        GamepadButtonType::Select => input_event.send(GameInputEvent::ToggleFullscreen),
-                        _ => {}
-                    }
+                GamepadButtonType::DPadDown => {
+                    input_event.send(GameInputEvent::Zoom(-10.0 * time.delta_seconds()))
                 }
-        }});
+                _ => {}
+            },
+        });
+        button_inputs
+            .get_just_pressed()
+            .for_each(|button| match button {
+                GamepadButton {
+                    gamepad: _,
+                    button_type,
+                } => match button_type {
+                    GamepadButtonType::East => input_event.send(GameInputEvent::ResetLevel),
+                    GamepadButtonType::Start => input_event.send(GameInputEvent::OpenMenu),
+                    GamepadButtonType::Select => input_event.send(GameInputEvent::ToggleFullscreen),
+                    _ => {}
+                },
+            });
 
         let left_stick_x = axes
             .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX))

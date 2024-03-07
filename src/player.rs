@@ -1,26 +1,21 @@
 use bevy::prelude::*;
 use bevy_rapier2d::control::{KinematicCharacterController, KinematicCharacterControllerOutput};
 
-use crate::state::ScheduleSet;
 use crate::input::GameInputEvent;
+use crate::state::ScheduleSet;
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
+        app.add_systems(
+            Update,
             (
-                gravity,
-                move_horizontal,
-                jump,
-            ).in_set(ScheduleSet::MainUpdate),
-            (
-                reset_velocity_on_collision,
-            ).in_set(ScheduleSet::VelocityCorrection),
-            (
-                apply_velocity,
-            ).in_set(ScheduleSet::TransformUpdate),
-        ));
+                (gravity, move_horizontal, jump).in_set(ScheduleSet::MainUpdate),
+                (reset_velocity_on_collision,).in_set(ScheduleSet::VelocityCorrection),
+                (apply_velocity,).in_set(ScheduleSet::TransformUpdate),
+            ),
+        );
     }
 }
 
@@ -62,7 +57,8 @@ pub fn apply_velocity(
         for mut charachter_controller in charachter_controller_query.iter_mut() {
             match charachter_controller.translation {
                 Some(translation) => {
-                    charachter_controller.translation = Some(translation + velocity.0 * time.delta_seconds());
+                    charachter_controller.translation =
+                        Some(translation + velocity.0 * time.delta_seconds());
                 }
                 None => {
                     charachter_controller.translation = Some(velocity.0 * time.delta_seconds());
@@ -87,8 +83,8 @@ pub fn gravity(
 pub fn move_horizontal(
     mut query: Query<&mut Velocity, With<Player>>,
     time: Res<Time>,
-    mut input_events: EventReader<GameInputEvent>
-) { 
+    mut input_events: EventReader<GameInputEvent>,
+) {
     let acceleration = 500.0;
     let max_speed: f32 = 170.0;
 
@@ -100,7 +96,8 @@ pub fn move_horizontal(
                     if velocity.0.x > 0.0 {
                         velocity.0.x = 0.0;
                     }
-                    velocity.0.x = (-max_speed as f32 * input_strength).max(velocity.0.x - acceleration * time.delta_seconds());
+                    velocity.0.x = (-max_speed as f32 * input_strength)
+                        .max(velocity.0.x - acceleration * time.delta_seconds());
                     active_movement = true;
                 }
             }
@@ -109,12 +106,13 @@ pub fn move_horizontal(
                     if velocity.0.x < 0.0 {
                         velocity.0.x = 0.0;
                     }
-                    velocity.0.x = (max_speed * input_strength).min(velocity.0.x + acceleration * time.delta_seconds());
+                    velocity.0.x = (max_speed * input_strength)
+                        .min(velocity.0.x + acceleration * time.delta_seconds());
                     active_movement = true;
                 }
             }
             _ => {}
-        } 
+        }
     }
     if !active_movement {
         for mut velocity in query.iter_mut() {
@@ -123,9 +121,9 @@ pub fn move_horizontal(
     }
 }
 
-pub fn jump (
+pub fn jump(
     mut query: Query<(&mut Velocity, &KinematicCharacterControllerOutput), With<Player>>,
-    mut input_events: EventReader<GameInputEvent>
+    mut input_events: EventReader<GameInputEvent>,
 ) {
     for event in input_events.read() {
         match event {

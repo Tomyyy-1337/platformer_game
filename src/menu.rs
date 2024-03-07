@@ -1,10 +1,9 @@
-use bevy::ecs::event;
-use bevy::{prelude::*, window::PresentMode};
-use bevy::window::{CursorGrabMode, PrimaryWindow};
 use crate::asset_loader::FontAssets;
 use crate::input::{GameInputEvent, MenuInputEvent};
-use crate::state::ScheduleSet;
 use crate::state::AppState;
+use crate::state::ScheduleSet;
+use bevy::window::{CursorGrabMode, PrimaryWindow};
+use bevy::{prelude::*, window::PresentMode};
 
 #[derive(Component)]
 pub struct FortsetzenButton;
@@ -26,7 +25,6 @@ pub struct MenuPlugin;
 #[derive(Component, Clone, Copy)]
 pub struct Identifier(ButtonType);
 
-
 #[derive(States, Clone, Copy, Default, Debug, Hash, PartialEq, Eq)]
 enum ButtonType {
     #[default]
@@ -37,7 +35,7 @@ enum ButtonType {
 }
 
 impl ButtonType {
-    fn next(&self) -> ButtonType{
+    fn next(&self) -> ButtonType {
         match self {
             ButtonType::Fortsetzen => ButtonType::Fullscreen,
             ButtonType::Fullscreen => ButtonType::Framerate,
@@ -46,7 +44,7 @@ impl ButtonType {
         }
     }
 
-    fn previous(&self) -> ButtonType{
+    fn previous(&self) -> ButtonType {
         match self {
             ButtonType::Fortsetzen => ButtonType::Quit,
             ButtonType::Fullscreen => ButtonType::Fortsetzen,
@@ -58,14 +56,20 @@ impl ButtonType {
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-            app.add_state::<ButtonType>()
-                .add_systems(Update, (
+        app.add_state::<ButtonType>()
+            .add_systems(
+                Update,
+                (
                     toggle_menu,
                     clear_menu,
                     toggle_cursor_visibiltiy,
                     toggle_fullscreen_key,
-                ).in_set(ScheduleSet::CheckMenu))
-                .add_systems(Update, (
+                )
+                    .in_set(ScheduleSet::CheckMenu),
+            )
+            .add_systems(
+                Update,
+                (
                     toggle_fullscreen_ui,
                     toggle_framerate_button,
                     fortsetzen_button,
@@ -73,9 +77,10 @@ impl Plugin for MenuPlugin {
                     button_hower,
                     set_background_color,
                     handle_menu_event,
-                ).in_set(ScheduleSet::PauseMenu));
+                )
+                    .in_set(ScheduleSet::PauseMenu),
+            );
     }
-        
 }
 
 fn handle_menu_event(
@@ -86,24 +91,24 @@ fn handle_menu_event(
 ) {
     for ev in menu_input_event.read() {
         match ev {
-            MenuInputEvent::Up => commands.insert_resource(NextState(Some(active_button.get().previous()))),
-            MenuInputEvent::Down => commands.insert_resource(NextState(Some(active_button.get().next()))),
-            MenuInputEvent::Select => {
-                match active_button.get() {
-                    ButtonType::Fortsetzen => fortsetzten_action(&mut commands),
-                    ButtonType::Quit => quit_game_action(),
-                    ButtonType::Framerate => {
-                        toggle_framerate_action(&mut window_query);
-                        return;
-                    
-                    },
-                    ButtonType::Fullscreen => {
-                        toggle_fullscreen(window_query);
-                        return;
-                    },
-                    
-                }
+            MenuInputEvent::Up => {
+                commands.insert_resource(NextState(Some(active_button.get().previous())))
             }
+            MenuInputEvent::Down => {
+                commands.insert_resource(NextState(Some(active_button.get().next())))
+            }
+            MenuInputEvent::Select => match active_button.get() {
+                ButtonType::Fortsetzen => fortsetzten_action(&mut commands),
+                ButtonType::Quit => quit_game_action(),
+                ButtonType::Framerate => {
+                    toggle_framerate_action(&mut window_query);
+                    return;
+                }
+                ButtonType::Fullscreen => {
+                    toggle_fullscreen(window_query);
+                    return;
+                }
+            },
             MenuInputEvent::CloseMenu => fortsetzten_action(&mut commands),
         }
     }
@@ -121,14 +126,14 @@ fn toggle_cursor_visibiltiy(
             let height = primary_window.height();
             primary_window.cursor.grab_mode = CursorGrabMode::None;
             primary_window.cursor.visible = true;
-            primary_window.set_cursor_position(Some(Vec2::new(width / 2.0, height / 2.0 )));
-        },
+            primary_window.set_cursor_position(Some(Vec2::new(width / 2.0, height / 2.0)));
+        }
         AppState::Running if simulation_state.is_changed() => {
             let mut primary_window = q_windows.single_mut();
             primary_window.cursor.grab_mode = CursorGrabMode::Locked;
             primary_window.cursor.visible = false;
-        },
-        _ => {},
+        }
+        _ => {}
     }
 }
 
@@ -143,8 +148,8 @@ fn clear_menu(
             for (entity, _) in query.iter_mut() {
                 commands.entity(entity).despawn_recursive();
             }
-        },
-        _ => {},
+        }
+        _ => {}
     }
 }
 
@@ -154,13 +159,13 @@ fn toggle_menu(
     mut ingame_events: EventReader<GameInputEvent>,
     mut menu_events: EventReader<MenuInputEvent>,
     simulation_state: Res<State<AppState>>,
-    font_assets: Res<FontAssets>,    
+    font_assets: Res<FontAssets>,
 ) {
     for event in menu_events.read() {
         match event {
             MenuInputEvent::CloseMenu => {
                 commands.insert_resource(NextState(Some(AppState::Running)));
-            },
+            }
             _ => (),
         }
     }
@@ -171,18 +176,19 @@ fn toggle_menu(
                 match simulation_state.get() {
                     AppState::Running => {
                         commands.insert_resource(NextState(Some(AppState::Menu)));
-                        commands.spawn((
-                            MenuItem,
-                            NodeBundle {
-                                style: Style {
-                                    width: Val::Percent(100.0),
-                                    height: Val::Percent(100.0),
-                                    align_items: AlignItems::Center,
-                                    justify_content: JustifyContent::Center,
+                        commands
+                            .spawn((
+                                MenuItem,
+                                NodeBundle {
+                                    style: Style {
+                                        width: Val::Percent(100.0),
+                                        height: Val::Percent(100.0),
+                                        align_items: AlignItems::Center,
+                                        justify_content: JustifyContent::Center,
+                                        ..default()
+                                    },
                                     ..default()
                                 },
-                                ..default()
-                            },
                             ))
                             .with_children(|parent| {
                                 parent
@@ -196,183 +202,215 @@ fn toggle_menu(
                                         ..default()
                                     })
                                     .with_children(|parent| {
-                                        parent.spawn(TextBundle::from_section(
-                                            "Test Game",
-                                            TextStyle {
-                                                font: font_assets.menu_font.clone(),
-                                                font_size: 80.0,
-                                                color: Color::RED,
+                                        parent.spawn(
+                                            TextBundle::from_section(
+                                                "Test Game",
+                                                TextStyle {
+                                                    font: font_assets.menu_font.clone(),
+                                                    font_size: 80.0,
+                                                    color: Color::RED,
                                                 },
-                                            ).with_style(Style {
+                                            )
+                                            .with_style(Style {
                                                 margin: UiRect::all(Val::Px(30.0)),
                                                 ..default()
                                             }),
                                         );
-                                        parent.spawn(TextBundle::from_section(
-                                            "Spiel Pausiert",
-                                            TextStyle {
-                                                font: font_assets.menu_font.clone(),
-                                                font_size: 50.0,
-                                                color: Color::WHITE,
+                                        parent.spawn(
+                                            TextBundle::from_section(
+                                                "Spiel Pausiert",
+                                                TextStyle {
+                                                    font: font_assets.menu_font.clone(),
+                                                    font_size: 50.0,
+                                                    color: Color::WHITE,
                                                 },
-                                            ).with_style(Style {
+                                            )
+                                            .with_style(Style {
                                                 margin: UiRect::all(Val::Px(15.0)),
                                                 ..default()
                                             }),
                                         );
-                                        parent.spawn(TextBundle::from_section(
-                                            "Escape zum Fortsetzen",
-                                            TextStyle {
-                                                font: font_assets.menu_font.clone(),
-                                                font_size: 50.0,
-                                                color: Color::WHITE,
+                                        parent.spawn(
+                                            TextBundle::from_section(
+                                                "Escape zum Fortsetzen",
+                                                TextStyle {
+                                                    font: font_assets.menu_font.clone(),
+                                                    font_size: 50.0,
+                                                    color: Color::WHITE,
                                                 },
-                                            ).with_style(Style {
+                                            )
+                                            .with_style(Style {
                                                 margin: UiRect::all(Val::Px(15.0)),
                                                 ..default()
                                             }),
                                         );
-        
+
                                         // Fortsetzen Button
-                                        parent.spawn((
-                                            FortsetzenButton,
-                                            Identifier(ButtonType::Fortsetzen),
-                                            ButtonBundle {
-                                                style: Style {
-                                                    margin: UiRect::all(Val::Px(15.0)),
-                                                    ..default()
+                                        parent
+                                            .spawn((
+                                                FortsetzenButton,
+                                                Identifier(ButtonType::Fortsetzen),
+                                                ButtonBundle {
+                                                    style: Style {
+                                                        margin: UiRect::all(Val::Px(15.0)),
+                                                        ..default()
+                                                    },
+                                                    background_color: Color::rgba(
+                                                        0.0, 0.0, 0.0, 0.8,
+                                                    )
+                                                    .into(),
+                                                    ..Default::default()
                                                 },
-                                                background_color: Color::rgba(0.0, 0.0, 0.0, 0.8).into(),
-                                                ..Default::default()
-                                        }))
-                                        .with_children(|parent| {
-                                            parent.spawn((MenuItem, TextBundle::from_section(
-                                                "Fortsetzen",
-                                                TextStyle {
-                                                    font: font_assets.menu_font.clone(),
-                                                    font_size: 25.0,
-                                                    color: Color::WHITE,
-                                                },
-                                            ).with_style(
-                                                Style {
-                                                    margin: UiRect::all(Val::Px(15.0)),
-                                                    ..default()
-                                                }
-                                            )));
-                                        });
-        
+                                            ))
+                                            .with_children(|parent| {
+                                                parent.spawn((
+                                                    MenuItem,
+                                                    TextBundle::from_section(
+                                                        "Fortsetzen",
+                                                        TextStyle {
+                                                            font: font_assets.menu_font.clone(),
+                                                            font_size: 25.0,
+                                                            color: Color::WHITE,
+                                                        },
+                                                    )
+                                                    .with_style(Style {
+                                                        margin: UiRect::all(Val::Px(15.0)),
+                                                        ..default()
+                                                    }),
+                                                ));
+                                            });
+
                                         // Toggle Fullscreen Button
-                                        parent.spawn((
-                                            FullscreenButton,
-                                            Identifier(ButtonType::Fullscreen),
-                                            ButtonBundle {
-                                                style: Style {
-                                                    margin: UiRect::all(Val::Px(15.0)),
-                                                    ..default()
+                                        parent
+                                            .spawn((
+                                                FullscreenButton,
+                                                Identifier(ButtonType::Fullscreen),
+                                                ButtonBundle {
+                                                    style: Style {
+                                                        margin: UiRect::all(Val::Px(15.0)),
+                                                        ..default()
+                                                    },
+                                                    background_color: Color::rgba(
+                                                        0.0, 0.0, 0.0, 0.8,
+                                                    )
+                                                    .into(),
+                                                    ..Default::default()
                                                 },
-                                                background_color: Color::rgba(0.0, 0.0, 0.0, 0.8).into(),
-                                                ..Default::default()
-                                        }))
-                                        .with_children(|parent| {
-                                            parent.spawn((MenuItem, TextBundle::from_section(
-                                                "Toggle Fullscreen",
-                                                TextStyle {
-                                                    font: font_assets.menu_font.clone(),
-                                                    font_size: 25.0,
-                                                    color: Color::WHITE,
-                                                },
-                                            ).with_style(
-                                                Style {
-                                                    margin: UiRect::all(Val::Px(15.0)),
-                                                    ..default()
-                                                }
-                                            )));
-                                        });
-        
+                                            ))
+                                            .with_children(|parent| {
+                                                parent.spawn((
+                                                    MenuItem,
+                                                    TextBundle::from_section(
+                                                        "Toggle Fullscreen",
+                                                        TextStyle {
+                                                            font: font_assets.menu_font.clone(),
+                                                            font_size: 25.0,
+                                                            color: Color::WHITE,
+                                                        },
+                                                    )
+                                                    .with_style(Style {
+                                                        margin: UiRect::all(Val::Px(15.0)),
+                                                        ..default()
+                                                    }),
+                                                ));
+                                            });
+
                                         // Toggle V-Sync
-                                        parent.spawn((
-                                            FramerateButton,
-                                            Identifier(ButtonType::Framerate),
-                                            ButtonBundle {
-                                                style: Style {
-                                                    margin: UiRect::all(Val::Px(15.0)),
-                                                    ..default()
+                                        parent
+                                            .spawn((
+                                                FramerateButton,
+                                                Identifier(ButtonType::Framerate),
+                                                ButtonBundle {
+                                                    style: Style {
+                                                        margin: UiRect::all(Val::Px(15.0)),
+                                                        ..default()
+                                                    },
+                                                    background_color: Color::rgba(
+                                                        0.0, 0.0, 0.0, 0.8,
+                                                    )
+                                                    .into(),
+                                                    ..Default::default()
                                                 },
-                                                background_color: Color::rgba(0.0, 0.0, 0.0, 0.8).into(),
-                                                ..Default::default()
-                                        }))
-                                        .with_children(|parent| {
-                                            parent.spawn((MenuItem, TextBundle::from_section(
-                                                "Toggle Vsync",
-                                                TextStyle {
-                                                    font: font_assets.menu_font.clone(),
-                                                    font_size: 25.0,
-                                                    color: Color::WHITE,
-                                                },
-                                            ).with_style(
-                                                Style {
-                                                    margin: UiRect::all(Val::Px(15.0)),
-                                                    ..default()
-                                                }
-                                            )));
-                                        });
-        
+                                            ))
+                                            .with_children(|parent| {
+                                                parent.spawn((
+                                                    MenuItem,
+                                                    TextBundle::from_section(
+                                                        "Toggle Vsync",
+                                                        TextStyle {
+                                                            font: font_assets.menu_font.clone(),
+                                                            font_size: 25.0,
+                                                            color: Color::WHITE,
+                                                        },
+                                                    )
+                                                    .with_style(Style {
+                                                        margin: UiRect::all(Val::Px(15.0)),
+                                                        ..default()
+                                                    }),
+                                                ));
+                                            });
+
                                         // Quit Button
-                                        parent.spawn((
-                                            QuitButton,
-                                            Identifier(ButtonType::Quit),
-                                            ButtonBundle {
-                                                style: Style {
-                                                    margin: UiRect::all(Val::Px(15.0)),
-                                                    ..default()
-                                                },
-                                                background_color: Color::rgba(0.0, 0.0, 0.0, 0.8).into(),
-                                                ..Default::default()
-                                        }))
-                                        .with_children(|parent| {
-                                            parent.spawn((
+                                        parent
+                                            .spawn((
                                                 QuitButton,
-                                                TextBundle::from_section(
-                                                "Spiel Beenden",
-                                                TextStyle {
-                                                    font: font_assets.menu_font.clone(),
-                                                    font_size: 25.0,
-                                                    color: Color::WHITE,
+                                                Identifier(ButtonType::Quit),
+                                                ButtonBundle {
+                                                    style: Style {
+                                                        margin: UiRect::all(Val::Px(15.0)),
+                                                        ..default()
+                                                    },
+                                                    background_color: Color::rgba(
+                                                        0.0, 0.0, 0.0, 0.8,
+                                                    )
+                                                    .into(),
+                                                    ..Default::default()
                                                 },
-                                            ).with_style(
-                                                Style {
-                                                    margin: UiRect::all(Val::Px(15.0)),
-                                                    ..default()
-                                                }
-                                            )));
-                                        });
-                                });
-                        });
-                    },
+                                            ))
+                                            .with_children(|parent| {
+                                                parent.spawn((
+                                                    QuitButton,
+                                                    TextBundle::from_section(
+                                                        "Spiel Beenden",
+                                                        TextStyle {
+                                                            font: font_assets.menu_font.clone(),
+                                                            font_size: 25.0,
+                                                            color: Color::WHITE,
+                                                        },
+                                                    )
+                                                    .with_style(Style {
+                                                        margin: UiRect::all(Val::Px(15.0)),
+                                                        ..default()
+                                                    }),
+                                                ));
+                                            });
+                                    });
+                            });
+                    }
                     _ => (),
                 };
-            },
-            _ => ()
+            }
+            _ => (),
         }
     }
 }
 
 fn button_hower(
-    mut interaction_query: Query<(&Interaction, &Identifier),(Changed<Interaction>, With<Button>)>,
+    mut interaction_query: Query<(&Interaction, &Identifier), (Changed<Interaction>, With<Button>)>,
     mut commands: Commands,
 ) {
     for (interaction, identifier) in interaction_query.iter_mut() {
         match interaction {
             Interaction::Hovered => {
                 commands.insert_resource(NextState(Some(identifier.0)));
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 }
 
 fn set_background_color(
-    mut background_color_query: Query<(&mut BackgroundColor, &Identifier),With<Button>>,
+    mut background_color_query: Query<(&mut BackgroundColor, &Identifier), With<Button>>,
     active_button: Res<State<ButtonType>>,
 ) {
     for (mut background_color, identifier) in background_color_query.iter_mut() {
@@ -381,20 +419,19 @@ fn set_background_color(
         } else {
             Color::rgba(0.0, 0.0, 0.0, 0.5)
         };
-
     }
 }
 
 fn fortsetzen_button(
-    mut interaction_query: Query<&Interaction,(Changed<Interaction>, With<FortsetzenButton>)>,
+    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<FortsetzenButton>)>,
     mut commands: Commands,
 ) {
     for interaction in interaction_query.iter_mut() {
         match interaction {
             Interaction::Pressed => {
                 fortsetzten_action(&mut commands);
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 }
@@ -403,16 +440,15 @@ fn fortsetzten_action(commands: &mut Commands<'_, '_>) {
     commands.insert_resource(NextState(Some(AppState::Running)));
 }
 
-
 fn quit_game_button(
-    mut interaction_query: Query<&Interaction,(Changed<Interaction>, With<QuitButton>)>,
+    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<QuitButton>)>,
 ) {
     for interaction in interaction_query.iter_mut() {
         match interaction {
             Interaction::Pressed => {
                 quit_game_action();
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 }
@@ -422,15 +458,15 @@ fn quit_game_action() {
 }
 
 pub fn toggle_framerate_button(
-    mut interaction_query: Query<&Interaction,(Changed<Interaction>, With<FramerateButton>)>,
+    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<FramerateButton>)>,
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     for interaction in interaction_query.iter_mut() {
         match interaction {
             Interaction::Pressed => {
                 toggle_framerate_action(&mut window_query);
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 }
@@ -454,23 +490,23 @@ fn toggle_fullscreen_key(
             GameInputEvent::ToggleFullscreen => {
                 toggle_fullscreen(window_query);
                 return;
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 }
 
 fn toggle_fullscreen_ui(
     window_query: Query<&mut Window, With<PrimaryWindow>>,
-    mut interaction_query: Query<&Interaction,(Changed<Interaction>, With<FullscreenButton>)>,
+    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<FullscreenButton>)>,
 ) {
     for interaction in interaction_query.iter_mut() {
         match interaction {
             Interaction::Pressed => {
                 toggle_fullscreen(window_query);
                 return;
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 }
