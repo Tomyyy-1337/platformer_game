@@ -1,7 +1,7 @@
 use bevy::{prelude::*, window::PresentMode};
 use bevy::window::{CursorGrabMode, PrimaryWindow};
 use crate::asset_loader::FontAssets;
-use crate::input::InputEvent;
+use crate::input::{InputEvent, MenuInputEvent};
 use crate::state::ScheduleSet;
 use crate::state::AppState;
 
@@ -22,24 +22,90 @@ pub struct MenuItem;
 
 pub struct MenuPlugin;
 
+#[derive(Component, Clone, Copy)]
+pub struct Identifier(ButtonType);
+
+
+#[derive(States, Clone, Copy, Default, Debug, Hash, PartialEq, Eq)]
+enum ButtonType {
+    #[default]
+    Fortsetzen,
+    Fullscreen,
+    Framerate,
+    Quit,
+}
+
+impl ButtonType {
+    fn next(&self) -> ButtonType{
+        match self {
+            ButtonType::Fortsetzen => ButtonType::Fullscreen,
+            ButtonType::Fullscreen => ButtonType::Framerate,
+            ButtonType::Framerate => ButtonType::Quit,
+            ButtonType::Quit => ButtonType::Fortsetzen,
+        }
+    }
+
+    fn previous(&self) -> ButtonType{
+        match self {
+            ButtonType::Fortsetzen => ButtonType::Quit,
+            ButtonType::Fullscreen => ButtonType::Fortsetzen,
+            ButtonType::Framerate => ButtonType::Fullscreen,
+            ButtonType::Quit => ButtonType::Framerate,
+        }
+    }
+}
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-            app.add_systems(Update, (
-                toggle_menu,
-                clear_menu,
-                toggle_cursor_visibiltiy,
-                toggle_fullscreen_key,
-            ).in_set(ScheduleSet::CheckMenu))
-            .add_systems(Update, (
-                toggle_fullscreen_ui,
-                toggle_framerate,
-                fortsetzen_button,
-                quit_game_button,
-                button_hower,
-            ).in_set(ScheduleSet::PauseMenu));
+            app.add_state::<ButtonType>()
+                .add_systems(Update, (
+                    toggle_menu,
+                    clear_menu,
+                    toggle_cursor_visibiltiy,
+                    toggle_fullscreen_key,
+                ).in_set(ScheduleSet::CheckMenu))
+                .add_systems(Update, (
+                    toggle_fullscreen_ui,
+                    toggle_framerate_button,
+                    fortsetzen_button,
+                    quit_game_button,
+                    button_hower,
+                    set_background_color,
+                    handle_menu_event,
+                ).in_set(ScheduleSet::PauseMenu));
     }
         
+}
+
+fn handle_menu_event(
+    mut menu_input_event: EventReader<MenuInputEvent>,
+    mut commands: Commands,
+    active_button: ResMut<State<ButtonType>>,
+    mut window_query: Query<&mut Window, With<PrimaryWindow>>,
+) {
+    for ev in menu_input_event.read() {
+        match ev {
+            MenuInputEvent::Up => commands.insert_resource(NextState(Some(active_button.get().previous()))),
+            MenuInputEvent::Down => commands.insert_resource(NextState(Some(active_button.get().next()))),
+            MenuInputEvent::Select => {
+                match active_button.get() {
+                    ButtonType::Fortsetzen => fortsetzten_action(&mut commands),
+                    ButtonType::Quit => quit_game_action(),
+                    ButtonType::Framerate => {
+                        toggle_framerate_action(&mut window_query);
+                        return;
+                    
+                    },
+                    ButtonType::Fullscreen => {
+                        toggle_fullscreen(window_query);
+                        return;
+                    },
+                    
+                }
+            }
+               
+        }
+    }
 }
 
 /// System to toggle the visibility of the cursor when the menu state changes.
@@ -159,6 +225,7 @@ fn toggle_menu(
                                         // Fortsetzen Button
                                         parent.spawn((
                                             FortsetzenButton,
+                                            Identifier(ButtonType::Fortsetzen),
                                             ButtonBundle {
                                                 style: Style {
                                                     margin: UiRect::all(Val::Px(15.0)),
@@ -186,6 +253,7 @@ fn toggle_menu(
                                         // Toggle Fullscreen Button
                                         parent.spawn((
                                             FullscreenButton,
+                                            Identifier(ButtonType::Fullscreen),
                                             ButtonBundle {
                                                 style: Style {
                                                     margin: UiRect::all(Val::Px(15.0)),
@@ -213,6 +281,7 @@ fn toggle_menu(
                                         // Toggle V-Sync
                                         parent.spawn((
                                             FramerateButton,
+                                            Identifier(ButtonType::Framerate),
                                             ButtonBundle {
                                                 style: Style {
                                                     margin: UiRect::all(Val::Px(15.0)),
@@ -240,6 +309,7 @@ fn toggle_menu(
                                         // Quit Button
                                         parent.spawn((
                                             QuitButton,
+                                            Identifier(ButtonType::Quit),
                                             ButtonBundle {
                                                 style: Style {
                                                     margin: UiRect::all(Val::Px(15.0)),
@@ -279,18 +349,30 @@ fn toggle_menu(
 }
 
 fn button_hower(
-    mut interaction_query: Query<(&Interaction,&mut BackgroundColor),(Changed<Interaction>, With<Button>)>,
+    mut interaction_query: Query<(&Interaction, &Identifier),(Changed<Interaction>, With<Button>)>,
+    mut commands: Commands,
 ) {
-    for (interaction, mut background_color) in interaction_query.iter_mut() {
+    for (interaction, identifier) in interaction_query.iter_mut() {
         match interaction {
             Interaction::Hovered => {
-                background_color.0 = Color::rgba(0.0, 0.0, 0.0, 0.8);
-            },
-            Interaction::None => {
-                background_color.0 = Color::rgba(0.0, 0.0, 0.0, 0.5);
+                commands.insert_resource(NextState(Some(identifier.0)));
             },
             _ => {},
         }
+    }
+}
+
+fn set_background_color(
+    mut background_color_query: Query<(&mut BackgroundColor, &Identifier),With<Button>>,
+    active_button: Res<State<ButtonType>>,
+) {
+    for (mut background_color, identifier) in background_color_query.iter_mut() {
+        background_color.0 = if identifier.0 == *active_button.get() {
+            Color::rgba(0.0, 0.0, 0.0, 0.8)
+        } else {
+            Color::rgba(0.0, 0.0, 0.0, 0.5)
+        };
+
     }
 }
 
@@ -301,12 +383,17 @@ fn fortsetzen_button(
     for interaction in interaction_query.iter_mut() {
         match interaction {
             Interaction::Pressed => {
-                commands.insert_resource(NextState(Some(AppState::Running)));
+                fortsetzten_action(&mut commands);
             },
             _ => {},
         }
     }
 }
+
+fn fortsetzten_action(commands: &mut Commands<'_, '_>) {
+    commands.insert_resource(NextState(Some(AppState::Running)));
+}
+
 
 fn quit_game_button(
     mut interaction_query: Query<&Interaction,(Changed<Interaction>, With<QuitButton>)>,
@@ -314,30 +401,38 @@ fn quit_game_button(
     for interaction in interaction_query.iter_mut() {
         match interaction {
             Interaction::Pressed => {
-                std::process::exit(0);
+                quit_game_action();
             },
             _ => {},
         }
     }
 }
 
-pub fn toggle_framerate(
+fn quit_game_action() {
+    std::process::exit(0);
+}
+
+pub fn toggle_framerate_button(
     mut interaction_query: Query<&Interaction,(Changed<Interaction>, With<FramerateButton>)>,
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     for interaction in interaction_query.iter_mut() {
         match interaction {
             Interaction::Pressed => {
-                for mut w in window_query.iter_mut() {
-                    w.present_mode = match w.present_mode {
-                        PresentMode::Mailbox => PresentMode::Fifo,
-                        PresentMode::Fifo => PresentMode::Mailbox,
-                        _ => PresentMode::Fifo,
-                    };
-                }
+                toggle_framerate_action(&mut window_query);
             },
             _ => {},
         }
+    }
+}
+
+fn toggle_framerate_action(window_query: &mut Query<'_, '_, &mut Window, With<PrimaryWindow>>) {
+    for mut w in window_query.iter_mut() {
+        w.present_mode = match w.present_mode {
+            PresentMode::Mailbox => PresentMode::Fifo,
+            PresentMode::Fifo => PresentMode::Mailbox,
+            _ => PresentMode::Fifo,
+        };
     }
 }
 
@@ -377,7 +472,5 @@ fn toggle_fullscreen(mut window_query: Query<'_, '_, &mut Window, With<PrimaryWi
             bevy::window::WindowMode::Windowed => bevy::window::WindowMode::BorderlessFullscreen,
             _ => bevy::window::WindowMode::Windowed,
         };
-        
-    
     }
 }

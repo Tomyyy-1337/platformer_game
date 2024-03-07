@@ -93,7 +93,7 @@ impl From<&EntityInstance> for ColliderBundle {
 
         match entity_instance.identifier.as_ref() {
             "Player" => ColliderBundle {
-                collider: Collider::ball(15.0),
+                collider: Collider::cuboid(14.0, 14.0),
                 ..Default::default()
             },
             _ => ColliderBundle::default(),

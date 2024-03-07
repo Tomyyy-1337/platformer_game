@@ -18,14 +18,14 @@ fn main() {
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         title: "Platformer".into(),
-                        resolution: (1000., 750.).into(),
+                        resolution: (1200., 750.).into(),
                         ..default()
                         }),
                     ..default()
                 }
             ),
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
-            // RapierDebugRenderPlugin::default(),
+            RapierDebugRenderPlugin::default(),
             asset_loader::AssetLoaderPlugin,
             world::WorldPlugin,
             camera::CameraPlugin,

@@ -1,3 +1,5 @@
+use std::time;
+
 use bevy::prelude::*;
 use bevy::render::camera;   
 use crate::player::Player;
@@ -50,11 +52,12 @@ fn zoom_on_scroll(
 fn move_camera(
     player_query: Query<&Transform, With<Player>>,
     mut camera_query: Query<&mut Transform, (Without<Player>, With<Camera>)>,
+    time: Res<Time>,
 ) {
     for player_transform in player_query.iter() {
         for mut camera_transform in camera_query.iter_mut() {
             let camera_pos = camera_transform.translation;
-            camera_transform.translation += (player_transform.translation + Vec3::new(-700.0, -480.0, 1.0) - camera_pos) * 0.1;
+            camera_transform.translation += (player_transform.translation + Vec3::new(-700.0, -480.0, 1.0) - camera_pos) * time.delta_seconds() * 10.0;
         }
     }
 }

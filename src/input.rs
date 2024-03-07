@@ -1,3 +1,4 @@
+use bevy::input::gamepad;
 use bevy::prelude::*;
 use bevy::input::mouse::MouseWheel;
 
@@ -14,18 +15,60 @@ pub enum InputEvent {
     ToggleFullscreen,
 }
 
+#[derive(Debug, Event)]
+pub enum MenuInputEvent {
+    Up,
+    Down,
+    Select,
+}
+
 pub struct InputPlugin;
 
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<InputEvent>()
+            .add_event::<MenuInputEvent>()
             .add_systems(Update, (
                 handle_keyboard_input,
                 handle_mouse_wheel_input,
                 gamepad_system,
             ).in_set(ScheduleSet::HandleInput)
-        );
+        )
+        .add_systems(Update, (
+            handle_menu_event_keyboard,
+            handle_menu_event_controler,
+        ).in_set(ScheduleSet::PauseMenu));
     }
+}
+
+fn handle_menu_event_keyboard (
+    mut menu_input_event: EventWriter<MenuInputEvent>,
+    keyboard_input: Res<Input<KeyCode>>,
+) {
+    keyboard_input.get_just_pressed().filter_map(|key| match key {
+        KeyCode::Up => Some(MenuInputEvent::Up),
+        KeyCode::Down => Some(MenuInputEvent::Down),
+        KeyCode::Return => Some(MenuInputEvent::Select),
+        _ => None,
+    }).for_each(|event| menu_input_event.send(event));
+}
+
+fn handle_menu_event_controler(
+    button_inputs: Res<Input<GamepadButton>>,
+    mut input_event: EventWriter<MenuInputEvent>,
+) {
+    button_inputs.get_just_pressed().for_each(|button| {
+        match button {
+            GamepadButton { gamepad: _, button_type } => {
+                match button_type {
+                    GamepadButtonType::DPadUp => input_event.send(MenuInputEvent::Up),
+                    GamepadButtonType::DPadDown => input_event.send(MenuInputEvent::Down),
+                    GamepadButtonType::South => input_event.send(MenuInputEvent::Select),
+                    _ => {}
+                }
+            }
+    }});
+    
 }
 
 fn handle_mouse_wheel_input(
