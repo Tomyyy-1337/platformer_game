@@ -1,5 +1,6 @@
 use crate::input;
 use crate::player;
+use crate::player_assets;
 use crate::state;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
@@ -24,10 +25,14 @@ impl Plugin for WorldPlugin {
             })
             .register_ldtk_int_cell::<WallBundle>(1)
             .register_ldtk_entity::<PlayerBundle>("Player")
-            .add_systems(Startup, (setup,))
+            .add_systems(Startup, (
+                setup,
+                spawn_wall_collision
+            ))
+            .add_systems(OnEnter(player_assets::LoadState::Done), spawn_wall_collision)
             .add_systems(
                 Update,
-                (spawn_wall_collision, update_level_selection, restart_level)
+                (update_level_selection, restart_level)
                     .in_set(state::ScheduleSet::MainUpdate),
             );
     }

@@ -18,7 +18,7 @@ pub enum LoadState {
 }
 
 #[derive(Component, Debug, Clone, Eq, PartialEq, Copy)]
-enum PlayerAnimationType {
+pub enum PlayerAnimationType {
     Idle,
     Walk,
     Run,
@@ -26,7 +26,7 @@ enum PlayerAnimationType {
 }
 
 #[derive(Component, Debug, Clone, Eq, PartialEq, Copy)]
-enum AnimationDirection {
+pub enum AnimationDirection {
     Left,
     Right,
 }
