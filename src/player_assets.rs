@@ -1,8 +1,6 @@
-use std::thread::current;
-use std::time::Duration;
-
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
+use bevy_rapier2d::control::KinematicCharacterControllerOutput;
 
 use crate::state::ScheduleSet;
 use crate::player;
@@ -107,6 +105,7 @@ fn spawn_player_sprite (
 fn update_player_animation(
     player_query: Query<&player::Velocity, With<player::Player>>,
     mut player_sprite_query: Query<(&mut PlayerAnimation, &mut TextureAtlasSprite), With<PlayerSprite>>,
+    collision_query: Query<&KinematicCharacterControllerOutput, With<player::Player>>,
 ) {
     for velocity in &mut player_query.iter() {
         for (mut animation,mut sprite) in &mut player_sprite_query.iter_mut() {
@@ -116,7 +115,14 @@ fn update_player_animation(
                 animation.current_direction = AnimationDirection::Left;
             };
             if animation.current_animation == PlayerAnimationType::Jump {
-                if sprite.index == 29 {
+                for collision in &mut collision_query.iter() {
+                    if collision.grounded {
+                        animation.current_animation = PlayerAnimationType::Idle;
+                        sprite.index = 30;
+                        return;
+                    }
+                }
+                if sprite.index == 29  {
                     animation.current_animation = PlayerAnimationType::Idle;
                     sprite.index = 30;
                 } else {

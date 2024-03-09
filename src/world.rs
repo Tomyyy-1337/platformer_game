@@ -27,13 +27,17 @@ impl Plugin for WorldPlugin {
             .register_ldtk_entity::<PlayerBundle>("Player")
             .add_systems(Startup, (
                 setup,
-                spawn_wall_collision
             ))
-            .add_systems(OnEnter(player_assets::LoadState::Done), spawn_wall_collision)
+            .add_systems(Update, (
+                restart_level, 
+                update_level_selection, 
+            ).in_set(state::ScheduleSet::HandleInput)
+            )
             .add_systems(
                 Update,
-                (update_level_selection, restart_level)
-                    .in_set(state::ScheduleSet::MainUpdate),
+                (
+                    spawn_wall_collision
+                ).in_set(state::ScheduleSet::MainUpdate),
             );
     }
 }
