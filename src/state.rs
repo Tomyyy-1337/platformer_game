@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
 pub enum ScheduleSet {
@@ -8,6 +9,9 @@ pub enum ScheduleSet {
     MainUpdate,
     VelocityCorrection,
     TransformUpdate,
+    SyncRapier,
+    StepRapier,
+    WritebackRapier,
     PostTransformUpdate,
 }
 
@@ -31,6 +35,9 @@ impl Plugin for SchedulePlugin {
                     ScheduleSet::MainUpdate,
                     ScheduleSet::VelocityCorrection,
                     ScheduleSet::TransformUpdate,
+                    ScheduleSet::SyncRapier,
+                    ScheduleSet::StepRapier,
+                    ScheduleSet::WritebackRapier,
                     ScheduleSet::PostTransformUpdate,
                 )
                     .chain()
@@ -38,6 +45,12 @@ impl Plugin for SchedulePlugin {
                 (ScheduleSet::PauseMenu,).run_if(in_state(AppState::Menu)),
             )
                 .chain(),
+        ).add_systems(
+            Update, (
+                RapierPhysicsPlugin::<NoUserData>::get_systems(PhysicsSet::SyncBackend).in_set(ScheduleSet::SyncRapier),
+                RapierPhysicsPlugin::<NoUserData>::get_systems(PhysicsSet::StepSimulation).in_set(ScheduleSet::StepRapier),
+                RapierPhysicsPlugin::<NoUserData>::get_systems(PhysicsSet::Writeback).in_set(ScheduleSet::WritebackRapier),
+            )
         );
     }
 }

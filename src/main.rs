@@ -24,7 +24,7 @@ fn main() {
                     }),
                     ..default()
                 }),
-            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
+            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0).with_default_system_setup(false),
             // RapierDebugRenderPlugin::default(),
             asset_loader::AssetLoaderPlugin,
             world::WorldPlugin,
